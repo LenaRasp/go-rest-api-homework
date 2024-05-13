@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
 	"bytes"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // Task ...
@@ -50,10 +51,14 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func postTask(w http.ResponseWriter, r *http.Request) {
+func addTask(w http.ResponseWriter, r *http.Request) {
 	var task Task
 	var buf bytes.Buffer
 
@@ -68,6 +73,12 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 			return
 	}
 
+	_, ok := tasks[task.ID]
+	if ok {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+	} 
+
 	tasks[task.ID] = task
 
 	w.Header().Set("Content-Type", "application/json")
@@ -79,7 +90,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-			http.Error(w, "Задание не найдено", http.StatusNoContent)
+			http.Error(w, "Задание не найдено", http.StatusBadRequest)
 			return
 	}
 
@@ -91,7 +102,11 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func deleteTask(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +114,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-			http.Error(w, "Задание не найдено", http.StatusNoContent)
+			http.Error(w, "Задание не найдено", http.StatusBadRequest)
 			return
 	}
 
@@ -113,14 +128,18 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 func main() {
 	r := chi.NewRouter()
 
 	r.Get("/tasks", getTasks)
 
-	r.Post("/tasks", postTask)
+	r.Post("/tasks", addTask)
 
 	r.Get("/tasks/{id}", getTask)
 
